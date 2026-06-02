@@ -1,0 +1,63 @@
+services:
+  api-gateway:
+    image: nginx:1.27-alpine
+    container_name: facoffee-api-gateway
+    hostname: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      USERS_UPSTREAM: host.docker.internal:3001
+      PARTICIPATION_UPSTREAM: host.docker.internal:3002
+      FINANCE_UPSTREAM: host.docker.internal:3003
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - keycloak
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: facoffee-rabbitmq
+    hostname: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: facoffee-keycloak
+    hostname: keycloak
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: facoffee
+      KEYCLOAK_ADMIN_PASSWORD: facoffee
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./keycloak/realm-facoffee.json:/opt/keycloak/data/import/realm-facoffee.json:ro
+
+  mailpit:
+    image: axllent/mailpit:v1.20
+    container_name: facoffee-mailpit
+    hostname: mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  keycloak_data:

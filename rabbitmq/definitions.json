@@ -1,0 +1,89 @@
+{
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "users": [
+    {
+      "name": "facoffee",
+      "password": "facoffee",
+      "tags": "administrator"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "facoffee",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "domain.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "participation.user-deactivated",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-consumer-timeout": 300000
+      }
+    },
+    {
+      "name": "notification.finance-pendency-created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-consumer-timeout": 300000
+      }
+    },
+    {
+      "name": "reporting.finance-pendency-created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-consumer-timeout": 300000
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "source": "domain.events",
+      "vhost": "/",
+      "destination": "participation.user-deactivated",
+      "destination_type": "queue",
+      "routing_key": "users.deactivated",
+      "arguments": {}
+    },
+    {
+      "source": "domain.events",
+      "vhost": "/",
+      "destination": "notification.finance-pendency-created",
+      "destination_type": "queue",
+      "routing_key": "finance.pendency-created",
+      "arguments": {}
+    },
+    {
+      "source": "domain.events",
+      "vhost": "/",
+      "destination": "reporting.finance-pendency-created",
+      "destination_type": "queue",
+      "routing_key": "finance.pendency-created",
+      "arguments": {}
+    }
+  ]
+}
