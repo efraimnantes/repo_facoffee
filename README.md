@@ -1,7 +1,26 @@
-# repo_facoffee
-# FACOFFEE
+# Microsserviço de Participation
 
-Repositório da entrega parcial do desafio FACOFFEE.
+Serviço responsável pela gestão de cotas de participação e adesões de usuários, com foco em segurança, consistência de dados e integração assíncrona.
 
-Até o momento, o repositório contém a infraestrutura base do projeto, incluindo Docker Compose, configuração do API Gateway, Keycloak, RabbitMQ e documentação dos contratos OpenAPI e AsyncAPI.
-A implementação do microsserviço será adicionada após a definição da divisão de equipes/serviços pelo professor.
+## 🚀 Arquitetura
+- **Framework:** FastAPI / Python 3.11
+- **Segurança:** RBAC (Role-Based Access Control) via JWT/Keycloak.
+- **Mensageria:** RabbitMQ para eventos assíncronos (Broker: `domain.events`).
+- **Persistência:** State-machine em memória (otimizado para alta performance e isolamento de domínio).
+- **Testes:** Suíte completa com `pytest` validando regras de negócio e segurança.
+
+## 🛠️ Como rodar o projeto
+1. Ative o ambiente virtual e instale dependências:
+   ```bash
+   python -m venv venv
+   .\venv\Scripts\Activate
+   pip install -r requirements.txt
+
+2. Inicie o serviço na porta 3002:
+   ```bash
+    python main.py
+
+🧪 Testes Automatizados
+O projeto possui 100% de cobertura nos cenários críticos de negócio
+   ```bash
+   pytest test_participations.py
