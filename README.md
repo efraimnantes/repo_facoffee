@@ -2,11 +2,11 @@
 
 Serviço responsável pela gestão de cotas de participação e adesões de usuários, com foco em segurança, consistência de dados e integração assíncrona.
 
-## 🚀 Arquitetura
+## 🧩 Arquitetura
 - **Framework:** FastAPI / Python 3.11
 - **Segurança:** RBAC (Role-Based Access Control) via JWT/Keycloak.
 - **Mensageria:** RabbitMQ para eventos assíncronos (Broker: `domain.events`).
-- **Persistência:** State-machine em memória (otimizado para alta performance e isolamento de domínio).
+- **Persistência:** armazenamento em memória para prototipação e testes locais.
 - **Testes:** Suíte completa com `pytest` validando regras de negócio e segurança.
 
 ## 🛠️ Como rodar o projeto
@@ -23,4 +23,11 @@ Serviço responsável pela gestão de cotas de participação e adesões de usu�
 🧪 Testes Automatizados
 O projeto possui 100% de cobertura nos cenários críticos de negócio
    ```bash
-   pytest test_participations.py
+    pytest test_participations.py
+```
+
+ ## ⚠️ Limitações conhecidas
+
+- A persistência atual é em memória, adequada para prototipação e testes locais.
+- A validação JWT está simplificada, com foco na extração de roles para RBAC.
+- O serviço publica eventos no formato definido no AsyncAPI, mas a integração ponta a ponta depende dos demais serviços consumidores.
