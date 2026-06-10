@@ -12,18 +12,32 @@ seguranca = HTTPBearer()
 bancocotas = {}
 bancoparticipacoes = {}
 
+def extrairpapeis(payload: dict):
+    papeis = payload.get("roles")
+
+    if papeis is None:
+        papeis = payload.get("realm_access", {}).get("roles", [])
+
+    return papeis
+
 def exigirpapel(papelnecessario: str):
     def validador(credenciais: HTTPAuthorizationCredentials = fastapi.Depends(seguranca)):
         try:
-            payload = jwt.decode(credenciais.credentials, options={"verify_signature": False, "verify_exp": False}, algorithms=["RS256"])
+            payload = jwt.decode(
+                credenciais.credentials,
+                options={"verify_signature": False, "verify_exp": False},
+                algorithms=["RS256"]
+            )
         except Exception:
             raise fastapi.HTTPException(status_code=401, detail="credencial invalida")
-        
-        papeis = payload.get("realm_access", {}).get("roles", [])
+
+        papeis = extrairpapeis(payload)
+
         if papelnecessario not in papeis:
             raise fastapi.HTTPException(status_code=403, detail="acesso negado pelo dominio")
-            
+
         return payload
+
     return validador
 
 @roteador.post("/quotas", status_code=201)
