@@ -65,9 +65,32 @@ async def criarcota(dados: requestcriarcota, token=fastapi.Depends(exigirpapel("
     return bancocotas[idgerado]
 
 @roteador.get("/quotas")
-async def listarcotas():
-    return {"items": list(bancocotas.values()), "page": {"page": 0, "size": 20, "totalelements": len(bancocotas), "totalpages": 1}}
+async def listarcotas(
+    active: bool | None = None,
+    condition: str | None = None,
+    items: str | None = None
+):
+    cotas = list(bancocotas.values())
 
+    if active is not None:
+        statusesperado = "ACTIVE" if active else "INACTIVE"
+        cotas = [cota for cota in cotas if cota["status"] == statusesperado]
+
+    if condition is not None:
+        cotas = [cota for cota in cotas if cota["condition"] == condition]
+
+    if items is not None:
+        cotas = [cota for cota in cotas if cota["items"] == items]
+
+    return {
+        "items": cotas,
+        "page": {
+            "page": 0,
+            "size": 20,
+            "totalelements": len(cotas),
+            "totalpages": 1
+        }
+    }
 @roteador.get("/quotas/{quotaid}")
 async def obtercota(quotaid: str):
     if quotaid not in bancocotas:
@@ -124,8 +147,35 @@ async def registraradesao(dados: requestadesao, token=fastapi.Depends(exigirpape
     return bancoparticipacoes[idparticipacao]
 
 @roteador.get("/participations")
-async def listarparticipacoes():
-    return {"items": list(bancoparticipacoes.values()), "page": {"page": 0, "size": 20, "totalelements": len(bancoparticipacoes), "totalpages": 1}}
+async def listarparticipacoes(
+    userid: str | None = fastapi.Query(None, alias="userId"),
+    quotaid: str | None = fastapi.Query(None, alias="quotaId"),
+    status: str | None = None,
+    cycle: str | None = None
+):
+    participacoes = list(bancoparticipacoes.values())
+
+    if userid is not None:
+        participacoes = [part for part in participacoes if part["userid"] == userid]
+
+    if quotaid is not None:
+        participacoes = [part for part in participacoes if part["quotaid"] == quotaid]
+
+    if status is not None:
+        participacoes = [part for part in participacoes if part["status"] == status]
+
+    if cycle is not None:
+        participacoes = [part for part in participacoes if part.get("startcycle") == cycle]
+
+    return {
+        "items": participacoes,
+        "page": {
+            "page": 0,
+            "size": 20,
+            "totalelements": len(participacoes),
+            "totalpages": 1
+        }
+    }
 
 @roteador.get("/participations/{partid}")
 async def obterparticipacao(partid: str):
