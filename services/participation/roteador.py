@@ -175,16 +175,20 @@ async def registraradesao(dados: requestadesao, token=fastapi.Depends(exigirpape
     }
     publicarevento({
     "eventId": f"evt_{uuid.uuid4().hex[:12]}",
+    "eventType": "FinancialPendencyCreated",
     "occurredAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-    "type": "FinancialPendencyCreated",
-    "pendencyId": f"pend_{uuid.uuid4().hex[:6]}",
-    "source": "MONTHLY_PARTICIPATION",
-    "sourceId": idparticipacao,
-    "userId": dados.userid,
-    "cycle": dados.startcycle,
-    "amount": cotaselecionada["amount"],
-    "status": "PENDING"
+    "version": "1.0",
+    "payload": {
+        "pendencyId": f"pend_{uuid.uuid4().hex[:6]}",
+        "source": "MONTHLY_PARTICIPATION",
+        "sourceId": idparticipacao,
+        "userId": dados.userid,
+        "cycle": dados.startcycle,
+        "amount": cotaselecionada["amount"],
+        "status": "PENDING"
+    }
 })
+
     return formatarparticipacao(bancoparticipacoes[idparticipacao])
 
 @roteador.get("/participations")

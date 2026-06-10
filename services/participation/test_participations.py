@@ -199,10 +199,17 @@ def test_registrar_adesao_publica_evento_com_metadados(monkeypatch):
     assert len(eventos_publicados) == 1
 
     evento = eventos_publicados[0]
-
     assert "eventId" in evento
     assert "occurredAt" in evento
-    assert evento["type"] == "FinancialPendencyCreated"
-    assert evento["userId"] == "usr_999"
-    assert evento["amount"] == 10.0
-    assert evento["status"] == "PENDING"
+    assert evento["eventType"] == "FinancialPendencyCreated"
+    assert evento["version"] == "1.0"
+
+    payload = evento["payload"]
+
+    assert payload["source"] == "MONTHLY_PARTICIPATION"
+    assert payload["userId"] == "usr_999"
+    assert payload["amount"] == 10.0
+    assert payload["status"] == "PENDING"
+    assert payload["cycle"] == "2026-06"
+    assert "pendencyId" in payload
+    assert "sourceId" in payload
