@@ -12,6 +12,45 @@ seguranca = HTTPBearer()
 bancocotas = {}
 bancoparticipacoes = {}
 
+def formatarpagina(total: int, page: int = 0, size: int = 20):
+    return {
+        "page": page,
+        "size": size,
+        "totalElements": total,
+        "totalPages": 1
+    }
+
+
+def formatarcota(cota: dict):
+    return {
+        "id": cota["id"],
+        "name": cota["name"],
+        "condition": cota["condition"],
+        "items": cota["items"],
+        "amount": cota["amount"],
+        "status": cota["status"],
+        "createdBy": cota.get("createdby"),
+        "createdAt": cota.get("createdat")
+    }
+
+
+def formatarparticipacao(part: dict):
+    resposta = {
+        "id": part["id"],
+        "userId": part["userid"],
+        "quotaId": part["quotaid"],
+        "status": part["status"],
+        "startCycle": part.get("startcycle"),
+        "quotaSnapshot": part.get("quotasnapshot"),
+        "createdAt": part.get("createdat"),
+        "cancelledAt": part.get("cancelledat"),
+        "cancelReason": part.get("cancelreason"),
+        "cancelRequestedBy": part.get("cancelrequestedby"),
+        "effectiveCycle": part.get("effectivecycle")
+    }
+
+    return {chave: valor for chave, valor in resposta.items() if valor is not None}
+
 def extrairpapeis(payload: dict):
     papeis = payload.get("roles")
 
@@ -62,7 +101,7 @@ async def criarcota(dados: requestcriarcota, token=fastapi.Depends(exigirpapel("
         "createdby": token.get("preferred_username", "system"),
         "createdat": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     }
-    return bancocotas[idgerado]
+    return formatarcota(bancocotas[idgerado])
 
 @roteador.get("/quotas")
 async def listarcotas(
@@ -83,19 +122,14 @@ async def listarcotas(
         cotas = [cota for cota in cotas if cota["items"] == items]
 
     return {
-        "items": cotas,
-        "page": {
-            "page": 0,
-            "size": 20,
-            "totalelements": len(cotas),
-            "totalpages": 1
-        }
-    }
+    "items": [formatarcota(cota) for cota in cotas],
+    "page": formatarpagina(len(cotas))
+}
 @roteador.get("/quotas/{quotaid}")
 async def obtercota(quotaid: str):
     if quotaid not in bancocotas:
         raise fastapi.HTTPException(status_code=404, detail="cota inexistente")
-    return bancocotas[quotaid]
+    return formatarcota(bancocotas[quotaid])
 
 @roteador.patch("/quotas/{quotaid}")
 async def atualizarcota(quotaid: str, dados: requestatualizarcota, token=fastapi.Depends(exigirpapel("MANAGER"))):
@@ -105,7 +139,7 @@ async def atualizarcota(quotaid: str, dados: requestatualizarcota, token=fastapi
     if dados.name: cota["name"] = dados.name
     if dados.amount is not None: cota["amount"] = dados.amount
     if dados.active is not None: cota["status"] = "ACTIVE" if dados.active else "INACTIVE"
-    return cota
+    return formatarcota(cota)
 
 @roteador.delete("/quotas/{quotaid}")
 async def desativarcota(quotaid: str, token=fastapi.Depends(exigirpapel("MANAGER"))):
@@ -115,7 +149,7 @@ async def desativarcota(quotaid: str, token=fastapi.Depends(exigirpapel("MANAGER
         if part["quotaid"] == quotaid and part["status"] == "ACTIVE":
             raise fastapi.HTTPException(status_code=409, detail="cota possui participacoes ativas")
     bancocotas[quotaid]["status"] = "INACTIVE"
-    return bancocotas[quotaid]
+    return formatarcota(bancocotas[quotaid])
 
 @roteador.post("/participations", status_code=201)
 async def registraradesao(dados: requestadesao, token=fastapi.Depends(exigirpapel("PARTICIPANT"))):
@@ -151,7 +185,7 @@ async def registraradesao(dados: requestadesao, token=fastapi.Depends(exigirpape
     "amount": cotaselecionada["amount"],
     "status": "PENDING"
 })
-    return bancoparticipacoes[idparticipacao]
+    return formatarparticipacao(bancoparticipacoes[idparticipacao])
 
 @roteador.get("/participations")
 async def listarparticipacoes(
@@ -175,21 +209,16 @@ async def listarparticipacoes(
         participacoes = [part for part in participacoes if part.get("startcycle") == cycle]
 
     return {
-        "items": participacoes,
-        "page": {
-            "page": 0,
-            "size": 20,
-            "totalelements": len(participacoes),
-            "totalpages": 1
-        }
-    }
+    "items": [formatarparticipacao(part) for part in participacoes],
+    "page": formatarpagina(len(participacoes))
+}
+    
 
 @roteador.get("/participations/{partid}")
 async def obterparticipacao(partid: str):
     if partid not in bancoparticipacoes:
         raise fastapi.HTTPException(status_code=404, detail="participacao inexistente")
-    return bancoparticipacoes[partid]
-
+    return formatarparticipacao(bancoparticipacoes[partid])
 @roteador.patch("/participations/{partid}")
 async def cancelarparticipacao(
     partid: str,
@@ -219,4 +248,4 @@ async def cancelarparticipacao(
     if dados.effectivecycle is not None:
         part["effectivecycle"] = dados.effectivecycle
 
-    return part
+    return formatarparticipacao(part)

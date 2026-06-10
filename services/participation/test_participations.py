@@ -65,7 +65,7 @@ def test_participant_pode_cancelar_propria_participacao(monkeypatch):
 
     assert resposta.status_code == 200
     assert resposta.json()["status"] == "CANCELLED"
-    assert resposta.json()["cancelrequestedby"] == "usr_999"
+    assert resposta.json()["cancelRequestedBy"] == "usr_999"
 
 
 def test_participant_nao_pode_cancelar_participacao_de_outro_usuario(monkeypatch):
@@ -106,7 +106,7 @@ def test_manager_pode_cancelar_qualquer_participacao(monkeypatch):
 
     assert resposta.status_code == 200
     assert resposta.json()["status"] == "CANCELLED"
-    assert resposta.json()["cancelrequestedby"] == "manager_001"    
+    assert resposta.json()["cancelRequestedBy"] == "manager_001"   
 
 def test_listar_cotas_filtrando_por_active():
     bancocotas["quota_ativa"] = {
@@ -157,7 +157,7 @@ def test_listar_participacoes_filtrando_por_userid():
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert len(corpo["items"]) == 1
-    assert corpo["items"][0]["userid"] == "usr_001"
+    assert corpo["items"][0]["userId"] == "usr_001"
 
 
 def test_participant_nao_pode_criar_cota(monkeypatch):
