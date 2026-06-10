@@ -140,10 +140,17 @@ async def registraradesao(dados: requestadesao, token=fastapi.Depends(exigirpape
         "createdat": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     }
     publicarevento({
-        "pendencyId": f"pend_{uuid.uuid4().hex[:6]}", "source": "MONTHLY_PARTICIPATION",
-        "sourceId": idparticipacao, "userId": dados.userid, "cycle": dados.startcycle,
-        "amount": cotaselecionada["amount"], "status": "PENDING"
-    })
+    "eventId": f"evt_{uuid.uuid4().hex[:12]}",
+    "occurredAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    "type": "FinancialPendencyCreated",
+    "pendencyId": f"pend_{uuid.uuid4().hex[:6]}",
+    "source": "MONTHLY_PARTICIPATION",
+    "sourceId": idparticipacao,
+    "userId": dados.userid,
+    "cycle": dados.startcycle,
+    "amount": cotaselecionada["amount"],
+    "status": "PENDING"
+})
     return bancoparticipacoes[idparticipacao]
 
 @roteador.get("/participations")
