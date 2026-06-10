@@ -40,6 +40,18 @@ def exigirpapel(papelnecessario: str):
 
     return validador
 
+def exigirautenticacao(credenciais: HTTPAuthorizationCredentials = fastapi.Depends(seguranca)):
+    try:
+        payload = jwt.decode(
+            credenciais.credentials,
+            options={"verify_signature": False, "verify_exp": False},
+            algorithms=["RS256"]
+        )
+    except Exception:
+        raise fastapi.HTTPException(status_code=401, detail="credencial invalida")
+
+    return payload
+
 @roteador.post("/quotas", status_code=201)
 async def criarcota(dados: requestcriarcota, token=fastapi.Depends(exigirpapel("MANAGER"))):
     idgerado = f"quota_{uuid.uuid4().hex[:6]}"
@@ -122,10 +134,32 @@ async def obterparticipacao(partid: str):
     return bancoparticipacoes[partid]
 
 @roteador.patch("/participations/{partid}")
-async def cancelarparticipacao(partid: str, dados: requestcancelamento):
+async def cancelarparticipacao(
+    partid: str,
+    dados: requestcancelamento,
+    token=fastapi.Depends(exigirautenticacao)
+):
     if partid not in bancoparticipacoes:
         raise fastapi.HTTPException(status_code=404, detail="participacao inexistente")
+
     part = bancoparticipacoes[partid]
+    papeis = extrairpapeis(token)
+
+    eh_manager = "MANAGER" in papeis
+    eh_dono = dados.requestedby == part["userid"]
+
+    if not eh_manager and not eh_dono:
+        raise fastapi.HTTPException(
+            status_code=403,
+            detail="cancelamento permitido apenas para gestor ou titular da participacao"
+        )
+
     part["status"] = "CANCELLED"
     part["cancelledat"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    part["cancelreason"] = dados.reason
+    part["cancelrequestedby"] = dados.requestedby
+
+    if dados.effectivecycle is not None:
+        part["effectivecycle"] = dados.effectivecycle
+
     return part
