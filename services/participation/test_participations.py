@@ -45,3 +45,64 @@ def test_adesaoduplicada_bloqueada(monkeypatch):
     
     assert resposta.status_code == 409
     assert "ja possui cota ativa" in resposta.json()["detail"]
+
+def test_participant_pode_cancelar_propria_participacao(monkeypatch):
+    monkeypatch.setattr(jwt, "decode", lambda *args, **kwargs: {"roles": ["PARTICIPANT"]})
+
+    bancoparticipacoes["part_test_01"] = {
+        "id": "part_test_01",
+        "userid": "usr_999",
+        "quotaid": "quota_test_01",
+        "status": "ACTIVE"
+    }
+
+    resposta = cliente.patch("/api/participation/participations/part_test_01", json={
+        "requestedBy": "usr_999",
+        "reason": "cancelamento solicitado pelo participante",
+        "effectiveCycle": "2026-06"
+    }, headers={"Authorization": "Bearer token_falso"})
+
+    assert resposta.status_code == 200
+    assert resposta.json()["status"] == "CANCELLED"
+    assert resposta.json()["cancelrequestedby"] == "usr_999"
+
+
+def test_participant_nao_pode_cancelar_participacao_de_outro_usuario(monkeypatch):
+    monkeypatch.setattr(jwt, "decode", lambda *args, **kwargs: {"roles": ["PARTICIPANT"]})
+
+    bancoparticipacoes["part_test_01"] = {
+        "id": "part_test_01",
+        "userid": "usr_999",
+        "quotaid": "quota_test_01",
+        "status": "ACTIVE"
+    }
+
+    resposta = cliente.patch("/api/participation/participations/part_test_01", json={
+        "requestedBy": "usr_123",
+        "reason": "tentativa indevida",
+        "effectiveCycle": "2026-06"
+    }, headers={"Authorization": "Bearer token_falso"})
+
+    assert resposta.status_code == 403
+    assert "cancelamento permitido apenas" in resposta.json()["detail"]
+
+
+def test_manager_pode_cancelar_qualquer_participacao(monkeypatch):
+    monkeypatch.setattr(jwt, "decode", lambda *args, **kwargs: {"roles": ["MANAGER"]})
+
+    bancoparticipacoes["part_test_01"] = {
+        "id": "part_test_01",
+        "userid": "usr_999",
+        "quotaid": "quota_test_01",
+        "status": "ACTIVE"
+    }
+
+    resposta = cliente.patch("/api/participation/participations/part_test_01", json={
+        "requestedBy": "manager_001",
+        "reason": "cancelamento administrativo",
+        "effectiveCycle": "2026-06"
+    }, headers={"Authorization": "Bearer token_falso"})
+
+    assert resposta.status_code == 200
+    assert resposta.json()["status"] == "CANCELLED"
+    assert resposta.json()["cancelrequestedby"] == "manager_001"    
